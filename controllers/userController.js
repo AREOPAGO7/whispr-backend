@@ -2,13 +2,36 @@ const User = require('../models/User');
 
 
 const getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+    const { uid } = req.body; // The user UID will be in the body
+  
+    // Validate the UID
+    if (!uid) {
+      return res.status(400).json({ error: 'UID is required in the request body.' });
+    }
+  
+    try {
+      // Fetch the user from MongoDB
+      const user = await User.findOne({ uid });
+  
+      // Check if the user exists
+      if (!user) {
+        return res.status(200).json({ user: null }); // Return null if user not found
+      }
+      
+      // Return the user data (excluding sensitive information like passwords)
+      const userData = {
+        uid: user.uid,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profilePicture,
+      };
+  
+      return res.status(200).json({ user: userData });
+    } catch (error) {
+      console.error('Error fetching user:', error); // Log the error for debugging
+      return res.status(500).json({ error: 'An error occurred while fetching the user.' });
+    }
+  };
 
 
 const createUser = async (req, res) => {
